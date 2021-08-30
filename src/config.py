@@ -7,18 +7,18 @@ args = Namespace(
     experiment = 'sup', # {'sup', 'ssl'}
     task = 'classification', # {'classification', 'regression'}
     model = 'saint',
-    pretrained_checkpoint = None, #'/home/ola/Projects/saint/checkpoints/lightning_logs/version_7/checkpoints/epoch=0-step=1.ckpt',
+    pretrained_checkpoint = None, #'checkpoints/lightning_logs/version_7/checkpoints/epoch=0-step=1.ckpt',
     
     # path to csv files for training either ssl or sup
-    train_csv_path = '/home/ola/Projects/saint/data/train.csv',
-    train_y_csv_path = '/home/ola/Projects/saint/data/train_y.csv',
-    val_csv_path = '/home/ola/Projects/saint/data/val.csv',
-    val_y_csv_path = '/home/ola/Projects/saint/data/val_y.csv',
-    test_csv_path = '/home/ola/Projects/saint/data/test.csv',
-    test_y_csv_path = '/home/ola/Projects/saint/data/test_y.csv',
+    train_csv_path = 'data/train.csv',
+    train_y_csv_path = 'data/train_y.csv',
+    val_csv_path = 'data/val.csv',
+    val_y_csv_path = 'data/val_y.csv',
+    test_csv_path = 'data/test.csv', # None
+    test_y_csv_path = 'data/test_y.csv', # None
     
     # parameters for predicting on test set
-    submit_csv_path = '/home/ola/Projects/saint/data/test.csv', # path to submission path for external prediction
+    submit_csv_path = 'data/test.csv', # path to submission path for external prediction
     pred_sav_path = 'data/prediction.csv',
     
     #parameters for the model 
@@ -45,7 +45,7 @@ args = Namespace(
     # parameters for the dataset
     no_cat = 10,
     no_num = 7,
-    cats = [1, 12, 3, 4, 2, 2, 2, 3, 12, 4],
+    cats = "1, 12, 3, 4, 2, 2, 2, 3, 12, 4", # pass either as a list or as a string of int
     batch_size = 32, # [32, 256]
     num_workers = 8,
     

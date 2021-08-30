@@ -15,11 +15,12 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 import pandas as pd
 
 from src.trainer import SaintSemiSupLightningModule, SaintSupLightningModule
-from src.config import args
 import copy
 
     
 def main(args):
+    """function to make automatic predition from held-out dataset for example in kaggle test set"""
+    
     if args.pretrained_checkpoint is None:
         print('Pretrained checkpoint path missing in config')
         return
@@ -31,6 +32,8 @@ def main(args):
                                        args.no_cat, args.cats)
     
     test_df = pd.read_csv(args.submit_csv_path)
+    
+    # Change 'ID' to sample unique identifier
     test_df = test_df[['ID']]
     test_df['target'] = -1
     
@@ -54,24 +57,35 @@ def main(args):
     model.freeze()
     
     preds = []
-    for x, _ in test_loader:
-        output = model(x)
-        pred = torch.sigmoid(output)
-        pred = (pred > 0.5).long()
-        preds.append(pred)
-    preds = torch.cat(preds, dim=0).squeeze()
-    preds = preds.numpy()
+    
+    with torch.no_grad():
+        for x, _ in test_loader:
+            output = model(x)
+            if args.num_output == 1 or args.num_output == None:
+                pred = torch.sigmoid(output)
+                pred = (pred > 0.5).long()
+            else:
+                pred = nn.functional.softmax(output, dim=1)
+                pred = torch.argmax(pred, dim=1)
+            preds.append(pred)
+        preds = torch.cat(preds, dim=0).squeeze()
+        preds = preds.numpy()
     
     assert len(preds) == len(test_df)
     test_df['target'] = preds
     
     test_df.to_csv(args.pred_sav_path, index=False)
     
-    print(f'Prediction finished,  csv save at {args.pred_sav_path}')
+    print(f'Prediction finished,  csv saved at {args.pred_sav_path}')
     
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    
+    # allow passing string as list for "cats" argument
+    if not isinstance(default_args.cats, list):
+        default_args.cats = [int(x.strip()) for x in default_args.cats.split(",")]
+    
     args = parse_arguments(parser, default_args)
     args = dotdict(args)
     
