@@ -57,7 +57,10 @@ class SaintSupLightningModule(pl.LightningModule):
 
         outputs = self.fc(x[:, self.cls_token_idx, :]).squeeze()    # BS x embed_dim
         
-        loss = self.criterion(outputs, targets.float())
+        # Need to cast to cater for either binary or multi-class loss
+        targets = targets.float() if self.num_classes is None else targets
+        
+        loss = self.criterion(outputs, targets)
         
         with torch.no_grad():
             if self.num_classes is None:
@@ -65,8 +68,8 @@ class SaintSupLightningModule(pl.LightningModule):
             else:
                 preds = nn.functional.softmax(outputs, dim=1)
 
-        auroc_fn.update(preds, targets)
-        accuracy_fn.update(preds, targets)
+        auroc_fn.update(preds, targets.long())
+        accuracy_fn.update(preds, targets.long())
         
         return loss
     
