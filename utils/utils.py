@@ -3,8 +3,8 @@ import copy
 import torch
 import torch.nn as nn
 
-import argparse
-from collections import ChainMap 
+from torchmetrics import AUROC, Accuracy
+from collections import ChainMap
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -26,42 +26,24 @@ def load_pretrained_model(model, path, model_name='transformer'):
     model.load_state_dict(pretrained_dict)
     return model
 
+class Metric:
+    "Metrics dispatcher. Adapted from answer at https://stackoverflow.com/a/58923974"
+    def __init__(self, num_classes):
+        self.num_classes=num_classes
 
-class dotdict(dict):
-    """dot.notation access to dictionary attributes
-    Source: How to use a dot “.” to access members of dictionary? \
-    https://stackoverflow.com/a/23689767
-    """
-    __getattr__ = dict.get
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
-    
-    
-def parse_arguments(parser, default_args):
-    parser.add_argument('--experiment', dest='experiment', 
-                        default=default_args.experiment, type=str,
-                        help="Experiment setup to be run. Choose either 'sup' for supervised or 'ssl' \
-                            for semisupervised")
-    parser.add_argument('--no_cat', dest='no_cat', type=int, 
-                        default=default_args.no_cat,
-                        help="number of categorical variables in the dataset (including the cls column)")
-    parser.add_argument('--no_num', dest='no_num', type=int, 
-                        default=default_args.no_num,
-                        help="number of numerical variables in the dataset (including the cls column)")
-    parser.add_argument('--cats', 
-                        default=default_args.cats, type=list,
-                        help="no. of categories of each categorical feature as a list")
-    parser.add_argument('--pretrained_checkpoint', type=str,
-                        default=default_args.pretrained_checkpoint,
-                        help="full path to ssl pretrained checkpoint to be finetuned")
-    parser.add_argument('--model', default=default_args.model, type=str,
-                        help="Select saint model to initialize", 
-                        choices=['saint', 'saint_s', 'saint_i'], 
-                        )
-    args = parser.parse_args()
-    args_col = ChainMap(vars(args), vars(default_args))    
-    
-    return args_col
+    def get_metric(self, metric='acc'):
+        """Dispatch metric with method"""
+        
+        # Get the method from 'self'. Default to a lambda.
+        method = getattr(self, metric, lambda: "Metric not implemented yet")
+        
+        return method()
+
+    def auroc(self):
+        return AUROC(num_classes=self.num_classes,)
+
+    def acc(self):
+        return  Accuracy(num_classes=self.num_classes)
 
 
 
